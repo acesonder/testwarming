@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard - Homeless Outreach Platform</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <div class="container wide">
+    <div class="header">
+      <div>
+        <h1>Dashboard</h1>
+        <div class="user-info">
+          <strong id="userName"></strong> | <span id="userRole"></span>
+        </div>
+      </div>
+      <button onclick="logout()" class="logout-btn">Logout</button>
+    </div>
+    
+    <div id="alert" class="alert hidden"></div>
+    
+    <div class="welcome-section">
+      <h2>Welcome to Your Dashboard</h2>
+      <p>
+        This is the main dashboard for outreach staff and service providers. 
+        More features will be added in future updates to help you coordinate 
+        outreach efforts and track services.
+      </p>
+      
+      <div class="feature-grid">
+        <div class="feature-card">
+          <h3>📋 My Profile</h3>
+          <p id="profileInfo">Loading...</p>
+        </div>
+        
+        <div class="feature-card">
+          <h3>🚀 Coming Soon</h3>
+          <p>Outreach tracking features will be added here</p>
+        </div>
+        
+        <div class="feature-card">
+          <h3>🚀 Coming Soon</h3>
+          <p>Service coordination tools will be added here</p>
+        </div>
+        
+        <div class="feature-card">
+          <h3>🚀 Coming Soon</h3>
+          <p>Reporting and analytics will be added here</p>
+        </div>
+      </div>
+      
+      <div style="margin-top: 40px;">
+        <button onclick="window.location.href='/admin'" id="adminBtn" style="display: none; width: auto; padding: 12px 40px;">
+          Go to Admin Panel
+        </button>
+      </div>
+    </div>
+  </div>
+  
+  <script src="/js/utils.js"></script>
+  <script>
+    // Check authentication
+    if (!requireAuth()) {
+      // Will redirect to login
+    } else {
+      // Load user info
+      const user = getCurrentUser();
+      if (user) {
+        document.getElementById('userName').textContent = `${user.firstName} ${user.lastName}`;
+        document.getElementById('userRole').textContent = user.role.charAt(0).toUpperCase() + user.role.slice(1);
+        
+        // Show admin button if user is admin
+        if (user.role === 'admin') {
+          document.getElementById('adminBtn').style.display = 'inline-block';
+        }
+        
+        // Load profile
+        loadProfile();
+      }
+    }
+    
+    async function loadProfile() {
+      try {
+        const data = await apiRequest('/api/auth/profile');
+        const profileInfo = document.getElementById('profileInfo');
+        profileInfo.innerHTML = `
+          <strong>Email:</strong> ${data.user.email}<br>
+          <strong>Organization:</strong> ${data.user.organization || 'N/A'}<br>
+          <strong>Member since:</strong> ${new Date(data.user.createdAt).toLocaleDateString()}
+        `;
+      } catch (error) {
+        showAlert('Failed to load profile', 'error');
+      }
+    }
+  </script>
+</body>
+</html>

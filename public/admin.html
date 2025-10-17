@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Panel - Homeless Outreach Platform</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <div class="container wide">
+    <div class="header">
+      <div>
+        <h1>Admin Panel</h1>
+        <div class="user-info">
+          <strong id="userName"></strong> | Administrator
+        </div>
+      </div>
+      <div style="display: flex; gap: 10px;">
+        <button onclick="window.location.href='/dashboard'" class="logout-btn btn-secondary">Dashboard</button>
+        <button onclick="logout()" class="logout-btn">Logout</button>
+      </div>
+    </div>
+    
+    <div id="alert" class="alert hidden"></div>
+    
+    <h2>User Management</h2>
+    
+    <table id="usersTable">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Role</th>
+          <th>Organization</th>
+          <th>Status</th>
+          <th>Created</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="usersTableBody">
+        <tr>
+          <td colspan="8" style="text-align: center;">Loading...</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  
+  <script src="/js/utils.js"></script>
+  <script>
+    // Check authentication and admin access
+    if (!requireAuth() || !requireAdmin()) {
+      // Will redirect
+    } else {
+      const user = getCurrentUser();
+      document.getElementById('userName').textContent = `${user.firstName} ${user.lastName}`;
+      loadUsers();
+    }
+    
+    async function loadUsers() {
+      try {
+        const data = await apiRequest('/api/admin/users');
+        displayUsers(data.users);
+      } catch (error) {
+        showAlert('Failed to load users', 'error');
+        document.getElementById('usersTableBody').innerHTML = '<tr><td colspan="8" style="text-align: center;">Failed to load users</td></tr>';
+      }
+    }
+    
+    function displayUsers(users) {
+      const tbody = document.getElementById('usersTableBody');
+      
+      if (users.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align: center;">No users found</td></tr>';
+        return;
+      }
+      
+      tbody.innerHTML = users.map(user => `
+        <tr>
+          <td>${user.id}</td>
+          <td>${user.first_name} ${user.last_name}</td>
+          <td>${user.email}</td>
+          <td><span class="badge badge-${user.role}">${user.role}</span></td>
+          <td>${user.organization || 'N/A'}</td>
+          <td><span class="badge badge-${user.is_active ? 'active' : 'inactive'}">${user.is_active ? 'Active' : 'Inactive'}</span></td>
+          <td>${new Date(user.created_at).toLocaleDateString()}</td>
+          <td>
+            <div class="action-buttons">
+              <button onclick="toggleStatus(${user.id}, ${user.is_active})" class="btn-${user.is_active ? 'danger' : 'success'}">
+                ${user.is_active ? 'Deactivate' : 'Activate'}
+              </button>
+              <button onclick="changeRole(${user.id})" class="btn-secondary">
+                Change Role
+              </button>
+            </div>
+          </td>
+        </tr>
+      `).join('');
+    }
+    
+    async function toggleStatus(userId, currentStatus) {
+      const action = currentStatus ? 'deactivate' : 'activate';
+      if (!confirm(`Are you sure you want to ${action} this user?`)) {
+        return;
+      }
+      
+      try {
+        await apiRequest(`/api/admin/users/${userId}/status`, {
+          method: 'PATCH',
+          body: JSON.stringify({ isActive: !currentStatus })
+        });
+        
+        showAlert(`User ${action}d successfully`, 'success');
+        loadUsers();
+      } catch (error) {
+        showAlert(`Failed to ${action} user: ${error.message}`, 'error');
+      }
+    }
+    
+    async function changeRole(userId) {
+      const role = prompt('Enter new role (admin, outreach, staff, provider):');
+      if (!role) return;
+      
+      const validRoles = ['admin', 'outreach', 'staff', 'provider'];
+      if (!validRoles.includes(role.toLowerCase())) {
+        showAlert('Invalid role', 'error');
+        return;
+      }
+      
+      try {
+        await apiRequest(`/api/admin/users/${userId}/role`, {
+          method: 'PATCH',
+          body: JSON.stringify({ role: role.toLowerCase() })
+        });
+        
+        showAlert('User role updated successfully', 'success');
+        loadUsers();
+      } catch (error) {
+        showAlert(`Failed to update role: ${error.message}`, 'error');
+      }
+    }
+  </script>
+</body>
+</html>

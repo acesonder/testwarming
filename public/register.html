@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Register - Homeless Outreach Platform</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Create Account</h1>
+    <p class="subtitle">Join the Homeless Outreach Platform</p>
+    
+    <div id="alert" class="alert hidden"></div>
+    
+    <form id="registerForm">
+      <div class="form-group">
+        <label for="firstName">First Name *</label>
+        <input type="text" id="firstName" name="firstName" required>
+      </div>
+      
+      <div class="form-group">
+        <label for="lastName">Last Name *</label>
+        <input type="text" id="lastName" name="lastName" required>
+      </div>
+      
+      <div class="form-group">
+        <label for="email">Email *</label>
+        <input type="email" id="email" name="email" required>
+      </div>
+      
+      <div class="form-group">
+        <label for="password">Password *</label>
+        <input type="password" id="password" name="password" required minlength="8">
+        <small style="color: #666; font-size: 12px;">Minimum 8 characters</small>
+      </div>
+      
+      <div class="form-group">
+        <label for="role">Role *</label>
+        <select id="role" name="role" required>
+          <option value="staff">Staff</option>
+          <option value="outreach">Outreach Worker</option>
+          <option value="provider">Service Provider</option>
+          <option value="admin">Administrator</option>
+        </select>
+      </div>
+      
+      <div class="form-group">
+        <label for="organization">Organization</label>
+        <input type="text" id="organization" name="organization">
+      </div>
+      
+      <div class="form-group">
+        <label for="phone">Phone Number</label>
+        <input type="tel" id="phone" name="phone">
+      </div>
+      
+      <button type="submit" id="submitBtn">Register</button>
+    </form>
+    
+    <div class="link">
+      Already have an account? <a href="/login">Login here</a>
+    </div>
+  </div>
+  
+  <script src="/js/utils.js"></script>
+  <script>
+    document.getElementById('registerForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const submitBtn = document.getElementById('submitBtn');
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Registering...';
+      
+      const formData = {
+        firstName: document.getElementById('firstName').value,
+        lastName: document.getElementById('lastName').value,
+        email: document.getElementById('email').value,
+        password: document.getElementById('password').value,
+        role: document.getElementById('role').value,
+        organization: document.getElementById('organization').value,
+        phone: document.getElementById('phone').value
+      };
+      
+      try {
+        const data = await apiRequest('/api/auth/register', {
+          method: 'POST',
+          body: JSON.stringify(formData)
+        });
+        
+        showAlert(data.message || 'Registration successful! Redirecting to login...', 'success');
+        
+        setTimeout(() => {
+          window.location.href = '/login';
+        }, 2000);
+      } catch (error) {
+        showAlert(error.message, 'error');
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Register';
+      }
+    });
+  </script>
+</body>
+</html>
