@@ -34,19 +34,20 @@
           <p id="profileInfo">Loading...</p>
         </div>
         
-        <div class="feature-card">
-          <h3>🚀 Coming Soon</h3>
-          <p>Outreach tracking features will be added here</p>
+        <div class="feature-card" onclick="window.location.href='/clients'" style="cursor: pointer;">
+          <h3>👥 Client Management</h3>
+          <p>View and manage client profiles, service history, and case management</p>
+        </div>
+        
+        <div class="feature-card" onclick="window.location.href='/messages'" style="cursor: pointer;">
+          <h3>💬 Messages</h3>
+          <p>Instant messaging with clients and other outreach staff</p>
+          <span id="dashboardUnreadBadge" class="badge-notification" style="display: none;">0</span>
         </div>
         
         <div class="feature-card">
-          <h3>🚀 Coming Soon</h3>
-          <p>Service coordination tools will be added here</p>
-        </div>
-        
-        <div class="feature-card">
-          <h3>🚀 Coming Soon</h3>
-          <p>Reporting and analytics will be added here</p>
+          <h3>📊 Reporting</h3>
+          <p>Analytics and reports coming soon</p>
         </div>
       </div>
       
@@ -93,6 +94,22 @@
         showAlert('Failed to load profile', 'error');
       }
     }
+    
+    async function loadUnreadCount() {
+      try {
+        const data = await apiRequest('/api/messages/unread-count');
+        if (data.unreadCount > 0) {
+          const badge = document.getElementById('dashboardUnreadBadge');
+          badge.textContent = data.unreadCount;
+          badge.style.display = 'inline-block';
+        }
+      } catch (error) {
+        console.error('Failed to load unread count:', error);
+      }
+    }
+    
+    // Load unread count
+    loadUnreadCount();
   </script>
 </body>
 </html>

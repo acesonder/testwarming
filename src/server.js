@@ -10,6 +10,8 @@ require('./config/database');
 // Import routes
 const authRoutes = require('./routes/auth');
 const adminRoutes = require('./routes/admin');
+const clientRoutes = require('./routes/clients');
+const messageRoutes = require('./routes/messages');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -40,6 +42,8 @@ app.set('views', path.join(__dirname, '../views'));
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/clients', clientRoutes);
+app.use('/api/messages', messageRoutes);
 
 // HTML Routes
 app.get('/', (req, res) => {
@@ -68,6 +72,22 @@ app.get('/dashboard', (req, res) => {
 
 app.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/admin.html'));
+});
+
+app.get('/clients', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/clients.html'));
+});
+
+app.get('/clients/:id', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/client-profile.html'));
+});
+
+app.get('/messages', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/messages.html'));
+});
+
+app.get('/assessments', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/assessments.html'));
 });
 
 // Health check endpoint

@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Client Profile - Homeless Outreach Platform</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <div class="container wide">
+    <div class="header">
+      <div>
+        <h1 id="clientName">Client Profile</h1>
+        <div class="user-info">
+          <strong id="userName"></strong> | <span id="userRole"></span>
+        </div>
+      </div>
+      <div style="display: flex; gap: 10px;">
+        <button onclick="window.location.href='/clients'" class="logout-btn btn-secondary">← Back to Clients</button>
+        <button onclick="logout()" class="logout-btn">Logout</button>
+      </div>
+    </div>
+    
+    <div id="alert" class="alert hidden"></div>
+    
+    <!-- Client Info Tabs -->
+    <div class="tabs">
+      <button class="tab-button active" onclick="showTab('profile')">📋 Profile</button>
+      <button class="tab-button" onclick="showTab('service-history')">📊 Service History</button>
+      <button class="tab-button" onclick="showTab('case-management')">💼 Case Management</button>
+      <button class="tab-button" onclick="showTab('assessments')">📝 Assessments</button>
+      <button class="tab-button" onclick="showTab('consents')">✅ Consent Agreements</button>
+    </div>
+    
+    <!-- Profile Tab -->
+    <div id="profile-tab" class="tab-content active">
+      <div class="profile-section">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+          <h2>Client Information</h2>
+          <button onclick="editProfile()" class="btn-secondary" style="width: auto; padding: 10px 20px;">✏️ Edit Profile</button>
+        </div>
+        <div id="profileContent" class="info-grid">
+          <p>Loading...</p>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Service History Tab -->
+    <div id="service-history-tab" class="tab-content">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h2>Service History</h2>
+        <button onclick="showAddServiceModal()" class="btn-primary" style="width: auto; padding: 10px 20px;">➕ Add Service Entry</button>
+      </div>
+      <div id="serviceHistoryContent">
+        <p>Loading...</p>
+      </div>
+    </div>
+    
+    <!-- Case Management Tab -->
+    <div id="case-management-tab" class="tab-content">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h2>Case Management</h2>
+        <button onclick="showAddCaseModal()" class="btn-primary" style="width: auto; padding: 10px 20px;">➕ Create New Case</button>
+      </div>
+      <div id="caseManagementContent">
+        <p>Loading...</p>
+      </div>
+    </div>
+    
+    <!-- Assessments Tab -->
+    <div id="assessments-tab" class="tab-content">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h2>Assessments</h2>
+        <button onclick="showAddAssessmentModal()" class="btn-primary" style="width: auto; padding: 10px 20px;">➕ Add Assessment</button>
+      </div>
+      <div class="assessment-types">
+        <button onclick="filterAssessments('initial-intake')" class="badge badge-filter">Initial Intake</button>
+        <button onclick="filterAssessments('mental-health')" class="badge badge-filter">Mental Health</button>
+        <button onclick="filterAssessments('work')" class="badge badge-filter">Work</button>
+        <button onclick="filterAssessments('income')" class="badge badge-filter">Income</button>
+        <button onclick="filterAssessments('addiction')" class="badge badge-filter">Addiction</button>
+        <button onclick="filterAssessments('housing')" class="badge badge-filter">Housing</button>
+        <button onclick="filterAssessments(null)" class="badge badge-filter">All</button>
+      </div>
+      <div id="assessmentsContent">
+        <p>Loading...</p>
+      </div>
+    </div>
+    
+    <!-- Consents Tab -->
+    <div id="consents-tab" class="tab-content">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h2>Consent Agreements</h2>
+        <button onclick="showAddConsentModal()" class="btn-primary" style="width: auto; padding: 10px 20px;">➕ Add Consent</button>
+      </div>
+      <div id="consentsContent">
+        <p>Loading...</p>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Add Service Modal -->
+  <div id="addServiceModal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <span class="close" onclick="closeModal('addServiceModal')">&times;</span>
+      <h2>Add Service Entry</h2>
+      <form id="addServiceForm" onsubmit="handleAddService(event)">
+        <div class="form-group">
+          <label>Service Type *</label>
+          <select name="serviceType" required>
+            <option value="">Select...</option>
+            <option value="food">Food Assistance</option>
+            <option value="shelter">Shelter</option>
+            <option value="medical">Medical Care</option>
+            <option value="counseling">Counseling</option>
+            <option value="employment">Employment Services</option>
+            <option value="housing">Housing Assistance</option>
+            <option value="legal">Legal Aid</option>
+            <option value="transportation">Transportation</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Service Date *</label>
+          <input type="date" name="serviceDate" required>
+        </div>
+        <div class="form-group">
+          <label>Description *</label>
+          <textarea name="description" rows="3" required></textarea>
+        </div>
+        <div class="form-group">
+          <label>Outcome</label>
+          <select name="outcome">
+            <option value="">Select...</option>
+            <option value="completed">Completed</option>
+            <option value="in-progress">In Progress</option>
+            <option value="referred">Referred</option>
+            <option value="declined">Declined</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Notes</label>
+          <textarea name="notes" rows="2"></textarea>
+        </div>
+        <div style="display: flex; gap: 10px; margin-top: 20px;">
+          <button type="submit" class="btn-primary">Add Service Entry</button>
+          <button type="button" onclick="closeModal('addServiceModal')" class="btn-secondary">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  
+  <!-- Add Case Modal -->
+  <div id="addCaseModal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <span class="close" onclick="closeModal('addCaseModal')">&times;</span>
+      <h2>Create New Case</h2>
+      <form id="addCaseForm" onsubmit="handleAddCase(event)">
+        <div class="form-group">
+          <label>Priority *</label>
+          <select name="priority" required>
+            <option value="low">Low</option>
+            <option value="medium" selected>Medium</option>
+            <option value="high">High</option>
+            <option value="urgent">Urgent</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Goal Description *</label>
+          <textarea name="goalDescription" rows="3" required></textarea>
+        </div>
+        <div class="form-group">
+          <label>Action Plan *</label>
+          <textarea name="actionPlan" rows="4" required></textarea>
+        </div>
+        <div style="display: flex; gap: 10px; margin-top: 20px;">
+          <button type="submit" class="btn-primary">Create Case</button>
+          <button type="button" onclick="closeModal('addCaseModal')" class="btn-secondary">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  
+  <!-- Add Assessment Modal -->
+  <div id="addAssessmentModal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <span class="close" onclick="closeModal('addAssessmentModal')">&times;</span>
+      <h2>Add Assessment</h2>
+      <form id="addAssessmentForm" onsubmit="handleAddAssessment(event)">
+        <div class="form-group">
+          <label>Assessment Type *</label>
+          <select name="assessmentType" required onchange="updateAssessmentForm(this.value)">
+            <option value="">Select...</option>
+            <option value="initial-intake">Initial Intake</option>
+            <option value="mental-health">Mental Health</option>
+            <option value="work">Work</option>
+            <option value="income">Income</option>
+            <option value="addiction">Addiction</option>
+            <option value="housing">Housing</option>
+          </select>
+        </div>
+        <div id="assessmentFields"></div>
+        <div class="form-group">
+          <label>Notes</label>
+          <textarea name="notes" rows="3"></textarea>
+        </div>
+        <div style="display: flex; gap: 10px; margin-top: 20px;">
+          <button type="submit" class="btn-primary">Save Assessment</button>
+          <button type="button" onclick="closeModal('addAssessmentModal')" class="btn-secondary">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  
+  <!-- Add Consent Modal -->
+  <div id="addConsentModal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <span class="close" onclick="closeModal('addConsentModal')">&times;</span>
+      <h2>Add Consent Agreement</h2>
+      <form id="addConsentForm" onsubmit="handleAddConsent(event)">
+        <div class="form-group">
+          <label>Consent Type *</label>
+          <select name="consentType" required>
+            <option value="">Select...</option>
+            <option value="information-sharing">Information Sharing</option>
+            <option value="treatment">Treatment</option>
+            <option value="photography">Photography/Video</option>
+            <option value="emergency-contact">Emergency Contact</option>
+            <option value="release-of-information">Release of Information</option>
+            <option value="general-services">General Services</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Client Signature *</label>
+          <input type="text" name="signature" required placeholder="Client's name as signature">
+        </div>
+        <div class="form-group">
+          <label>Notes</label>
+          <textarea name="notes" rows="3"></textarea>
+        </div>
+        <div style="display: flex; gap: 10px; margin-top: 20px;">
+          <button type="submit" class="btn-primary">Add Consent</button>
+          <button type="button" onclick="closeModal('addConsentModal')" class="btn-secondary">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  
+  <script src="/js/utils.js"></script>
+  <script>
+    let clientId = null;
+    let clientData = null;
+    let currentAssessmentFilter = null;
+    
+    // Check authentication
+    if (!requireAuth()) {
+      // Will redirect to login
+    } else {
+      const user = getCurrentUser();
+      if (user) {
+        document.getElementById('userName').textContent = `${user.firstName} ${user.lastName}`;
+        document.getElementById('userRole').textContent = user.role.charAt(0).toUpperCase() + user.role.slice(1);
+        
+        // Get client ID from URL
+        const pathParts = window.location.pathname.split('/');
+        clientId = pathParts[pathParts.length - 1];
+        
+        loadClientProfile();
+      }
+    }
+    
+    function showTab(tabName) {
+      // Hide all tabs
+      document.querySelectorAll('.tab-content').forEach(tab => {
+        tab.classList.remove('active');
+      });
+      document.querySelectorAll('.tab-button').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      
+      // Show selected tab
+      document.getElementById(`${tabName}-tab`).classList.add('active');
+      event.target.classList.add('active');
+      
+      // Load tab data
+      if (tabName === 'service-history') {
+        loadServiceHistory();
+      } else if (tabName === 'case-management') {
+        loadCaseManagement();
+      } else if (tabName === 'assessments') {
+        loadAssessments();
+      } else if (tabName === 'consents') {
+        loadConsents();
+      }
+    }
+    
+    async function loadClientProfile() {
+      try {
+        const data = await apiRequest(`/api/clients/${clientId}`);
+        clientData = data.client;
+        document.getElementById('clientName').textContent = `${clientData.first_name} ${clientData.last_name}`;
+        displayProfile(clientData);
+      } catch (error) {
+        showAlert('Failed to load client profile', 'error');
+      }
+    }
+    
+    function displayProfile(client) {
+      const content = document.getElementById('profileContent');
+      content.innerHTML = `
+        <div class="info-item"><strong>Full Name:</strong> ${client.first_name} ${client.last_name}</div>
+        <div class="info-item"><strong>Date of Birth:</strong> ${client.date_of_birth ? new Date(client.date_of_birth).toLocaleDateString() : 'N/A'}</div>
+        <div class="info-item"><strong>Gender:</strong> ${client.gender || 'N/A'}</div>
+        <div class="info-item"><strong>Phone:</strong> ${client.phone || 'N/A'}</div>
+        <div class="info-item"><strong>Email:</strong> ${client.email || 'N/A'}</div>
+        <div class="info-item"><strong>Address:</strong> ${client.address || 'N/A'}</div>
+        <div class="info-item"><strong>City:</strong> ${client.city || 'N/A'}</div>
+        <div class="info-item"><strong>State:</strong> ${client.state || 'N/A'}</div>
+        <div class="info-item"><strong>Zip Code:</strong> ${client.zip_code || 'N/A'}</div>
+        <div class="info-item"><strong>Emergency Contact:</strong> ${client.emergency_contact_name || 'N/A'}</div>
+        <div class="info-item"><strong>Emergency Phone:</strong> ${client.emergency_contact_phone || 'N/A'}</div>
+        <div class="info-item full-width"><strong>Notes:</strong><br>${client.notes || 'No notes'}</div>
+      `;
+    }
+    
+    async function loadServiceHistory() {
+      try {
+        const data = await apiRequest(`/api/clients/${clientId}/service-history`);
+        displayServiceHistory(data.history);
+      } catch (error) {
+        showAlert('Failed to load service history', 'error');
+      }
+    }
+    
+    function displayServiceHistory(history) {
+      const content = document.getElementById('serviceHistoryContent');
+      if (history.length === 0) {
+        content.innerHTML = '<p>No service history entries found.</p>';
+        return;
+      }
+      
+      content.innerHTML = history.map(entry => `
+        <div class="card">
+          <div class="card-header">
+            <strong>${entry.service_type}</strong>
+            <span class="badge badge-${entry.outcome || 'default'}">${entry.outcome || 'N/A'}</span>
+          </div>
+          <div class="card-body">
+            <p><strong>Date:</strong> ${new Date(entry.service_date).toLocaleDateString()}</p>
+            <p><strong>Description:</strong> ${entry.description}</p>
+            ${entry.notes ? `<p><strong>Notes:</strong> ${entry.notes}</p>` : ''}
+            <p><strong>Provided by:</strong> ${entry.provider_first_name ? `${entry.provider_first_name} ${entry.provider_last_name}` : 'N/A'}</p>
+          </div>
+        </div>
+      `).join('');
+    }
+    
+    async function loadCaseManagement() {
+      try {
+        const data = await apiRequest(`/api/clients/${clientId}/cases`);
+        displayCases(data.cases);
+      } catch (error) {
+        showAlert('Failed to load cases', 'error');
+      }
+    }
+    
+    function displayCases(cases) {
+      const content = document.getElementById('caseManagementContent');
+      if (cases.length === 0) {
+        content.innerHTML = '<p>No cases found.</p>';
+        return;
+      }
+      
+      content.innerHTML = cases.map(caseItem => `
+        <div class="card">
+          <div class="card-header">
+            <strong>Case #${caseItem.id}</strong>
+            <div>
+              <span class="badge badge-${caseItem.priority}">${caseItem.priority}</span>
+              <span class="badge badge-${caseItem.status}">${caseItem.status}</span>
+            </div>
+          </div>
+          <div class="card-body">
+            <p><strong>Case Manager:</strong> ${caseItem.manager_first_name ? `${caseItem.manager_first_name} ${caseItem.manager_last_name}` : 'N/A'}</p>
+            <p><strong>Goal:</strong> ${caseItem.goal_description}</p>
+            <p><strong>Action Plan:</strong> ${caseItem.action_plan}</p>
+            ${caseItem.notes ? `<p><strong>Notes:</strong> ${caseItem.notes}</p>` : ''}
+            <p><strong>Created:</strong> ${new Date(caseItem.created_at).toLocaleDateString()}</p>
+            <p><strong>Updated:</strong> ${new Date(caseItem.updated_at).toLocaleDateString()}</p>
+          </div>
+        </div>
+      `).join('');
+    }
+    
+    async function loadAssessments() {
+      try {
+        const url = currentAssessmentFilter 
+          ? `/api/clients/${clientId}/assessments?type=${currentAssessmentFilter}`
+          : `/api/clients/${clientId}/assessments`;
+        const data = await apiRequest(url);
+        displayAssessments(data.assessments);
+      } catch (error) {
+        showAlert('Failed to load assessments', 'error');
+      }
+    }
+    
+    function displayAssessments(assessments) {
+      const content = document.getElementById('assessmentsContent');
+      if (assessments.length === 0) {
+        content.innerHTML = '<p>No assessments found.</p>';
+        return;
+      }
+      
+      content.innerHTML = assessments.map(assessment => `
+        <div class="card">
+          <div class="card-header">
+            <strong>${assessment.assessment_type.replace(/-/g, ' ').toUpperCase()}</strong>
+            <span>${new Date(assessment.assessment_date).toLocaleDateString()}</span>
+          </div>
+          <div class="card-body">
+            <p><strong>Assessed by:</strong> ${assessment.assessor_first_name ? `${assessment.assessor_first_name} ${assessment.assessor_last_name}` : 'N/A'}</p>
+            ${assessment.notes ? `<p><strong>Notes:</strong> ${assessment.notes}</p>` : ''}
+          </div>
+        </div>
+      `).join('');
+    }
+    
+    async function loadConsents() {
+      try {
+        const data = await apiRequest(`/api/clients/${clientId}/consents`);
+        displayConsents(data.consents);
+      } catch (error) {
+        showAlert('Failed to load consent agreements', 'error');
+      }
+    }
+    
+    function displayConsents(consents) {
+      const content = document.getElementById('consentsContent');
+      if (consents.length === 0) {
+        content.innerHTML = '<p>No consent agreements found.</p>';
+        return;
+      }
+      
+      content.innerHTML = consents.map(consent => `
+        <div class="card">
+          <div class="card-header">
+            <strong>${consent.consent_type.replace(/-/g, ' ').toUpperCase()}</strong>
+            <span class="badge badge-${consent.is_active ? 'active' : 'inactive'}">${consent.is_active ? 'Active' : 'Revoked'}</span>
+          </div>
+          <div class="card-body">
+            <p><strong>Agreed:</strong> ${new Date(consent.agreed_at).toLocaleDateString()}</p>
+            <p><strong>Signature:</strong> ${consent.signature}</p>
+            <p><strong>Witnessed by:</strong> ${consent.witness_first_name ? `${consent.witness_first_name} ${consent.witness_last_name}` : 'N/A'}</p>
+            ${consent.notes ? `<p><strong>Notes:</strong> ${consent.notes}</p>` : ''}
+          </div>
+        </div>
+      `).join('');
+    }
+    
+    function filterAssessments(type) {
+      currentAssessmentFilter = type;
+      loadAssessments();
+    }
+    
+    function closeModal(modalId) {
+      document.getElementById(modalId).style.display = 'none';
+      const form = document.getElementById(modalId.replace('Modal', 'Form'));
+      if (form) form.reset();
+    }
+    
+    function showAddServiceModal() {
+      document.getElementById('addServiceModal').style.display = 'flex';
+    }
+    
+    function showAddCaseModal() {
+      document.getElementById('addCaseModal').style.display = 'flex';
+    }
+    
+    function showAddAssessmentModal() {
+      document.getElementById('addAssessmentModal').style.display = 'flex';
+    }
+    
+    function showAddConsentModal() {
+      document.getElementById('addConsentModal').style.display = 'flex';
+    }
+    
+    async function handleAddService(event) {
+      event.preventDefault();
+      const formData = new FormData(event.target);
+      const serviceData = Object.fromEntries(formData.entries());
+      
+      try {
+        await apiRequest(`/api/clients/${clientId}/service-history`, {
+          method: 'POST',
+          body: JSON.stringify(serviceData)
+        });
+        
+        showAlert('Service entry added successfully', 'success');
+        closeModal('addServiceModal');
+        loadServiceHistory();
+      } catch (error) {
+        showAlert(error.message || 'Failed to add service entry', 'error');
+      }
+    }
+    
+    async function handleAddCase(event) {
+      event.preventDefault();
+      const formData = new FormData(event.target);
+      const caseData = Object.fromEntries(formData.entries());
+      
+      try {
+        await apiRequest(`/api/clients/${clientId}/cases`, {
+          method: 'POST',
+          body: JSON.stringify(caseData)
+        });
+        
+        showAlert('Case created successfully', 'success');
+        closeModal('addCaseModal');
+        loadCaseManagement();
+      } catch (error) {
+        showAlert(error.message || 'Failed to create case', 'error');
+      }
+    }
+    
+    async function handleAddAssessment(event) {
+      event.preventDefault();
+      const formData = new FormData(event.target);
+      const assessmentType = formData.get('assessmentType');
+      const notes = formData.get('notes');
+      
+      // Collect assessment data
+      const assessmentData = {};
+      formData.forEach((value, key) => {
+        if (key !== 'assessmentType' && key !== 'notes') {
+          assessmentData[key] = value;
+        }
+      });
+      
+      try {
+        await apiRequest(`/api/clients/${clientId}/assessments`, {
+          method: 'POST',
+          body: JSON.stringify({
+            assessmentType,
+            assessmentData,
+            notes
+          })
+        });
+        
+        showAlert('Assessment saved successfully', 'success');
+        closeModal('addAssessmentModal');
+        loadAssessments();
+      } catch (error) {
+        showAlert(error.message || 'Failed to save assessment', 'error');
+      }
+    }
+    
+    async function handleAddConsent(event) {
+      event.preventDefault();
+      const formData = new FormData(event.target);
+      const consentData = Object.fromEntries(formData.entries());
+      
+      try {
+        await apiRequest(`/api/clients/${clientId}/consents`, {
+          method: 'POST',
+          body: JSON.stringify(consentData)
+        });
+        
+        showAlert('Consent agreement added successfully', 'success');
+        closeModal('addConsentModal');
+        loadConsents();
+      } catch (error) {
+        showAlert(error.message || 'Failed to add consent agreement', 'error');
+      }
+    }
+    
+    function updateAssessmentForm(type) {
+      const fieldsDiv = document.getElementById('assessmentFields');
+      const forms = {
+        'initial-intake': `
+          <div class="form-group"><label>Current Living Situation</label><input type="text" name="livingSituation"></div>
+          <div class="form-group"><label>Length of Homelessness</label><input type="text" name="homelessDuration"></div>
+          <div class="form-group"><label>Primary Needs</label><textarea name="primaryNeeds" rows="2"></textarea></div>
+        `,
+        'mental-health': `
+          <div class="form-group"><label>Mental Health History</label><textarea name="mentalHealthHistory" rows="2"></textarea></div>
+          <div class="form-group"><label>Current Medications</label><input type="text" name="medications"></div>
+          <div class="form-group"><label>Risk Assessment</label><select name="riskLevel"><option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option></select></div>
+        `,
+        'work': `
+          <div class="form-group"><label>Employment Status</label><select name="employmentStatus"><option value="unemployed">Unemployed</option><option value="part-time">Part-time</option><option value="full-time">Full-time</option></select></div>
+          <div class="form-group"><label>Skills</label><textarea name="skills" rows="2"></textarea></div>
+          <div class="form-group"><label>Barriers to Employment</label><textarea name="barriers" rows="2"></textarea></div>
+        `,
+        'income': `
+          <div class="form-group"><label>Income Sources</label><textarea name="incomeSources" rows="2"></textarea></div>
+          <div class="form-group"><label>Monthly Income</label><input type="number" name="monthlyIncome" step="0.01"></div>
+          <div class="form-group"><label>Benefits Received</label><input type="text" name="benefits"></div>
+        `,
+        'addiction': `
+          <div class="form-group"><label>Substance Use History</label><textarea name="substanceHistory" rows="2"></textarea></div>
+          <div class="form-group"><label>Current Use</label><select name="currentUse"><option value="none">None</option><option value="occasional">Occasional</option><option value="regular">Regular</option></select></div>
+          <div class="form-group"><label>Treatment History</label><textarea name="treatmentHistory" rows="2"></textarea></div>
+        `,
+        'housing': `
+          <div class="form-group"><label>Housing Preferences</label><textarea name="housingPreferences" rows="2"></textarea></div>
+          <div class="form-group"><label>Budget</label><input type="number" name="budget" step="0.01"></div>
+          <div class="form-group"><label>Barriers to Housing</label><textarea name="housingBarriers" rows="2"></textarea></div>
+        `
+      };
+      
+      fieldsDiv.innerHTML = forms[type] || '';
+    }
+    
+    function editProfile() {
+      showAlert('Edit profile functionality coming soon', 'info');
+    }
+  </script>
+</body>
+</html>

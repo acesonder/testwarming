@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Messages - Homeless Outreach Platform</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <div class="container wide">
+    <div class="header">
+      <div>
+        <h1>💬 Messages</h1>
+        <div class="user-info">
+          <strong id="userName"></strong> | <span id="userRole"></span>
+        </div>
+      </div>
+      <div style="display: flex; gap: 10px;">
+        <button onclick="window.location.href='/clients'" class="logout-btn btn-secondary">👥 Clients</button>
+        <button onclick="window.location.href='/dashboard'" class="logout-btn btn-secondary">Dashboard</button>
+        <button onclick="logout()" class="logout-btn">Logout</button>
+      </div>
+    </div>
+    
+    <div id="alert" class="alert hidden"></div>
+    
+    <div class="messaging-container">
+      <div class="conversations-list">
+        <h3>Conversations</h3>
+        <div id="conversationsList">
+          <p>Loading conversations...</p>
+        </div>
+      </div>
+      
+      <div class="message-area">
+        <div id="noConversation" class="no-conversation">
+          <p>Select a conversation to start messaging</p>
+        </div>
+        
+        <div id="conversationArea" style="display: none;">
+          <div class="conversation-header">
+            <h3 id="conversationName"></h3>
+          </div>
+          
+          <div id="messagesContainer" class="messages-container">
+            <!-- Messages will be loaded here -->
+          </div>
+          
+          <div class="message-input-container">
+            <form id="messageForm" onsubmit="handleSendMessage(event)">
+              <textarea id="messageInput" name="content" placeholder="Type your message..." rows="3" required></textarea>
+              <button type="submit" class="btn-primary" style="width: auto; padding: 12px 30px;">Send</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <script src="/js/utils.js"></script>
+  <script>
+    let currentConversation = null;
+    let conversations = [];
+    
+    // Check authentication
+    if (!requireAuth()) {
+      // Will redirect to login
+    } else {
+      const user = getCurrentUser();
+      if (user) {
+        document.getElementById('userName').textContent = `${user.firstName} ${user.lastName}`;
+        document.getElementById('userRole').textContent = user.role.charAt(0).toUpperCase() + user.role.slice(1);
+        loadConversations();
+      }
+    }
+    
+    async function loadConversations() {
+      try {
+        const data = await apiRequest('/api/messages/conversations');
+        conversations = data.conversations;
+        displayConversations(conversations);
+      } catch (error) {
+        showAlert('Failed to load conversations', 'error');
+        document.getElementById('conversationsList').innerHTML = '<p>Failed to load conversations</p>';
+      }
+    }
+    
+    function displayConversations(convs) {
+      const container = document.getElementById('conversationsList');
+      
+      if (convs.length === 0) {
+        container.innerHTML = '<p>No conversations yet</p>';
+        return;
+      }
+      
+      container.innerHTML = convs.map(conv => `
+        <div class="conversation-item ${currentConversation && currentConversation.other_user_id === conv.other_user_id && currentConversation.other_user_type === conv.other_user_type ? 'active' : ''}" 
+             onclick="selectConversation(${conv.other_user_id}, '${conv.other_user_type}', '${conv.other_user_name}')">
+          <div class="conversation-info">
+            <strong>${conv.other_user_name}</strong>
+            <span class="conversation-type">${conv.other_user_type === 'client' ? '(Client)' : '(Staff)'}</span>
+          </div>
+          <div class="conversation-preview">${conv.last_message || ''}</div>
+          <div class="conversation-meta">
+            <span class="conversation-time">${new Date(conv.last_message_time).toLocaleString()}</span>
+            ${conv.unread_count > 0 ? `<span class="badge-notification">${conv.unread_count}</span>` : ''}
+          </div>
+        </div>
+      `).join('');
+    }
+    
+    async function selectConversation(otherId, otherType, otherName) {
+      currentConversation = { other_user_id: otherId, other_user_type: otherType, other_user_name: otherName };
+      
+      // Update UI
+      document.getElementById('noConversation').style.display = 'none';
+      document.getElementById('conversationArea').style.display = 'flex';
+      document.getElementById('conversationName').textContent = otherName;
+      
+      // Load messages
+      await loadMessages();
+      
+      // Update conversations list UI
+      displayConversations(conversations);
+    }
+    
+    async function loadMessages() {
+      if (!currentConversation) return;
+      
+      try {
+        const data = await apiRequest(`/api/messages/conversations/${currentConversation.other_user_type}/${currentConversation.other_user_id}`);
+        displayMessages(data.messages);
+      } catch (error) {
+        showAlert('Failed to load messages', 'error');
+      }
+    }
+    
+    function displayMessages(messages) {
+      const container = document.getElementById('messagesContainer');
+      const currentUser = getCurrentUser();
+      
+      if (messages.length === 0) {
+        container.innerHTML = '<p class="no-messages">No messages yet. Start the conversation!</p>';
+        return;
+      }
+      
+      container.innerHTML = messages.map(msg => {
+        const isSent = msg.sender_id === currentUser.id && msg.sender_type === 'user';
+        return `
+          <div class="message ${isSent ? 'sent' : 'received'}">
+            <div class="message-content">${msg.content}</div>
+            <div class="message-time">${new Date(msg.sent_at).toLocaleString()}</div>
+          </div>
+        `;
+      }).join('');
+      
+      // Scroll to bottom
+      container.scrollTop = container.scrollHeight;
+    }
+    
+    async function handleSendMessage(event) {
+      event.preventDefault();
+      
+      if (!currentConversation) {
+        showAlert('Please select a conversation first', 'error');
+        return;
+      }
+      
+      const formData = new FormData(event.target);
+      const content = formData.get('content');
+      
+      try {
+        await apiRequest('/api/messages', {
+          method: 'POST',
+          body: JSON.stringify({
+            recipientId: currentConversation.other_user_id,
+            recipientType: currentConversation.other_user_type,
+            content
+          })
+        });
+        
+        // Clear input
+        document.getElementById('messageInput').value = '';
+        
+        // Reload messages
+        await loadMessages();
+        
+        // Reload conversations list
+        await loadConversations();
+      } catch (error) {
+        showAlert(error.message || 'Failed to send message', 'error');
+      }
+    }
+    
+    // Auto-refresh messages every 10 seconds
+    setInterval(() => {
+      if (currentConversation) {
+        loadMessages();
+      }
+      loadConversations();
+    }, 10000);
+  </script>
+</body>
+</html>
